@@ -13,13 +13,20 @@ void simplify(int* num, int*den){
     *den = *den/a;
 }
 
-Plotter::Plotter(int x_step_pin, int x_dir_pin, int y_step_pin, int y_dir_pin):
+Plotter::Plotter(int x_step_pin, int x_dir_pin, int y_step_pin, int y_dir_pin, int pen_pin):
 motorX(AccelStepper::DRIVER, x_step_pin, x_dir_pin),
 motorY(AccelStepper::DRIVER, y_step_pin, y_dir_pin){
     speed= 500;
     motorX.setMaxSpeed(speed);
     motorY.setMaxSpeed(speed);
+    servo_pin = pen_pin;
+    up_angle = 10;
+}
 
+void Plotter::init_pen(){
+    pen.attach(servo_pin);
+    pen.write(up_angle);
+    // pen.write(0);
 }
 
 void Plotter::stepX(int steps, int dir){
@@ -28,6 +35,7 @@ void Plotter::stepX(int steps, int dir){
     while(motorX.distanceToGo() != 0){
         motorX.runSpeedToPosition();
     }
+    pos_x += steps*dir;
 }
 
 void Plotter::stepY(int steps, int dir){
@@ -36,6 +44,7 @@ void Plotter::stepY(int steps, int dir){
     while(motorY.distanceToGo() != 0){
         motorY.runSpeedToPosition();
     }
+    pos_y += steps*dir;
 }
 
 void Plotter::goto_relative_coords(int x, int y){
@@ -65,9 +74,13 @@ void Plotter::goto_relative_coords(int x, int y){
 
 }
 
-
-
-
+void Plotter::goto_abs_coords(int x, int y, int z){
+    //z==0 means pen down
+    //z==1 means pen up
+    pen.write(up_angle*z);
+    delay(500);
+    goto_relative_coords(x - pos_x, y - pos_y);
+}
 
 void Plotter::goto_rel_best(int x, int y){
 
